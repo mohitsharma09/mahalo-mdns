@@ -191,6 +191,8 @@ public class ServiceInfo
         buf.append(_iPort);
         buf.append(',');
         buf.append(getTextString());
+        buf.append(',');
+        buf.append(_eState);
         buf.append(']');
         return buf.toString();
     }
