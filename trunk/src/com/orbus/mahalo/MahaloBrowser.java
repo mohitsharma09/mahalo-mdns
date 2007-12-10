@@ -75,33 +75,42 @@ public class MahaloBrowser implements MahaloSocketListener {
         }
 		
 		// report cached service types
-        List<DNSRecord> ptrList = _Cache.get(asType, DNSEntry.EntryType.PTR, DNSEntry.EntryClass.IN);
-        if(ptrList != null) {
-        	for(DNSRecord rec : ptrList) {
-        		DNSRecord.Pointer ptrRec = (DNSRecord.Pointer)rec;
-        		// Find a matching SRV record if we have one
-        		DNSRecord.Service srvRec = _Cache.getAssociatedService(ptrRec);
-        		if(srvRec != null) {	
-        			ServiceInfo srvInfo = new ServiceInfo(srvRec);
-        			RemoteHostInfo hostInfo = null;
-        			
-        			// If we have it in the cache, report the address for free.
-        			DNSRecord.Address addressRec = _Cache.getAssociatedAddress(srvRec);
-        			if(addressRec != null) {
-        				hostInfo = new RemoteHostInfo(addressRec);        				
-        				aListener.serviceResolved(new ServiceEvent(this, srvInfo, hostInfo));
-        			}
-        			else {
-        				aListener.serviceAdded(new ServiceEvent(this, srvInfo, null));
-        			}
-        		}
-        	}
+        List<ServiceEvent> events = getCachedServices(asType);
+        for(ServiceEvent event : events) {
+        	aListener.serviceAdded(event);
         }
         
         // TODO: Set up a timer to repeat this query.
         DNSPacket packet = new DNSPacket(false);
         packet.addQuestion(new DNSQuestion(asType, DNSEntry.EntryType.PTR, DNSEntry.EntryClass.IN, false));
         _Socket.send(packet);
+	}
+	
+	public ServiceEvent[] performSyncServiceQuery(String asType, int aiWait) {
+		final List<ServiceEvent> events = getCachedServices(asType);
+		
+		ServiceListener listener = new ServiceListener() {
+			public void serviceAdded(ServiceEvent event) {
+				events.add(event);
+			}
+			public void serviceRemoved(ServiceEvent event) { /* Don't care */ }
+			public void serviceResolved(ServiceEvent event) { /* Don't care */ }
+		};
+		
+		addServiceListener(asType, listener);
+		DNSPacket packet = new DNSPacket(false);
+        packet.addQuestion(new DNSQuestion(asType, DNSEntry.EntryType.PTR, DNSEntry.EntryClass.IN, false));
+        // TODO: Known answer suppression
+        _Socket.send(packet);
+        
+        try {
+        	Thread.sleep(aiWait);
+        } catch(InterruptedException e) { }
+        removeServiceListener(asType, listener);
+        
+        ServiceEvent[] eventArray = new ServiceEvent[events.size()];
+        events.toArray(eventArray);
+        return eventArray;
 	}
 	
 	public void removeServiceListener(String asType, ServiceListener aListener) {
@@ -180,6 +189,21 @@ public class MahaloBrowser implements MahaloSocketListener {
 				}
 			}
 		}
+	}
+	
+	private List<ServiceEvent> getCachedServices(String asType) {
+		List<DNSRecord> ptrList = _Cache.get(asType, DNSEntry.EntryType.PTR, DNSEntry.EntryClass.IN);
+		List<ServiceEvent> events = new LinkedList<ServiceEvent>();
+        if(ptrList != null) {
+        	for(DNSRecord rec : ptrList) {
+        		DNSRecord.Pointer ptrRec = (DNSRecord.Pointer)rec;
+        		// Find a matching SRV record if we have one
+        		DNSRecord.Service srvRec = _Cache.getAssociatedService(ptrRec);
+        		events.add(getEventFromRecord(srvRec));
+        	}
+        }
+        
+        return events;
 	}
 	
 	private ServiceEvent getEventFromRecord(DNSRecord.Service aSrvRecord) {

@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 
+import org.apache.log4j.Logger;
+
 import com.orbus.mahalo.dns.DNSEntry;
 import com.orbus.mahalo.dns.DNSPacket;
 import com.orbus.mahalo.dns.DNSQuestion;
@@ -35,6 +37,8 @@ import com.orbus.mahalo.tasks.Prober;
 import com.orbus.mahalo.tasks.Responder;
 
 public class MahaloBroadcaster implements MahaloSocketListener {
+	private final static Logger s_Logger = Logger.getLogger(MahaloBroadcaster.class);
+	
 	private boolean _bOwnsSocket;
 	private MahaloSocket _MahaloSocket;
 	private HostInfo _HostInfo;
@@ -56,6 +60,7 @@ public class MahaloBroadcaster implements MahaloSocketListener {
 		
 		_MahaloSocket = aSocket;
 		_MahaloSocket.addListener(this);
+		
 		_HostInfo = new HostInfo(_MahaloSocket.getBoundAddress(), asName);
 		_Timer = new Timer();
 	}
@@ -153,7 +158,9 @@ public class MahaloBroadcaster implements MahaloSocketListener {
     			break;
     	}
     	int itimeElapsed = (int)(System.currentTimeMillis() - aPacket.getRecieved());
-    	_Timer.schedule(responder, Responder.GetDelay(bonlyResponder, itimeElapsed));
+    	int idelay = Responder.GetDelay(bonlyResponder, itimeElapsed);
+    	s_Logger.trace("Scheduling responce in " + idelay + "ms");
+    	_Timer.schedule(responder, idelay);
 	}
 	
 	public void handleResponse(DNSPacket aPacket) {

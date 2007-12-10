@@ -30,11 +30,6 @@ public final class DNSQuestion
 {
 	DNSEntry _Entry;	
 	
-	DNSQuestion()
-	{
-		
-	}
-	
 	public boolean wantsUnicastResponce() {
 		return _Entry.getUnique();
 	}
@@ -47,9 +42,16 @@ public final class DNSQuestion
 		return _Entry.getName();
 	}
 	
-	public DNSEntry.EntryType getType()
-	{
+	public DNSEntry.EntryType getType() {
 		return _Entry.getType();
+	}
+	
+	public DNSEntry.EntryClass getDNSClass() {
+		return _Entry.getDNSClass();
+	}
+	
+	DNSQuestion() {
+		
 	}
 	
 	/**

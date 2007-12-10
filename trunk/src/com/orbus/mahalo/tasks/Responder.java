@@ -134,6 +134,8 @@ public class Responder extends TimerTask {
         	else
         		_Socket.send(outPacket);
         }
+        else
+        	s_Logger.trace("Found no responces to questions posed to the responder.");
 	}
 	
 	public static int GetDelay(boolean abDelay, int aiElapsed)

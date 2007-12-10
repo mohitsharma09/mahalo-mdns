@@ -22,6 +22,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
@@ -48,7 +49,9 @@ public class MahaloSocket {
     public MahaloSocket(InetAddress aAddress) throws IOException {
     	_BoundAddress = aAddress;
     	_NetInterface = NetworkInterface.getByInetAddress(aAddress);
-    	
+    	if(_NetInterface == null) {
+    		throw new SocketException("Could not find network interface associated with requested address: " + aAddress);
+    	}
     	openMulticastSocket();
     }
     
@@ -138,7 +141,7 @@ public class MahaloSocket {
 	        	_MulticastSocket.leaveGroup(_MulticastGroup);
 	        	_MulticastSocket.close();
         	} catch(IOException e) {
-        		s_Logger.warn("Error closing multicast socket.");
+        		s_Logger.warn("Error closing multicast socket", e);
         	}
         }
         
@@ -153,14 +156,14 @@ public class MahaloSocket {
     	try {
     		_MulticastGroup = InetAddress.getByName(DNSPacket.MDNS_GROUP);
     		_MulticastSocket = new MulticastSocket(DNSPacket.MDNS_PORT);
-            _MulticastSocket.setNetworkInterface(_NetInterface);
+    		_MulticastSocket.setNetworkInterface(_NetInterface);
             _MulticastSocket.setSoTimeout(1000);
             _MulticastSocket.setTimeToLive(255);
             _MulticastSocket.joinGroup(_MulticastGroup);
             
             _bContinueRunning = true;
     	} catch(IOException e) {
-    		s_Logger.error("Error opening multicast socket.  Closing... (ignore any warnings about errors closing the socket)");
+    		s_Logger.error("Error opening multicast socket.  Closing... (ignore any warnings about errors closing the socket)", e);
     		closeMulticastSocket();
     		throw e;
     	}
