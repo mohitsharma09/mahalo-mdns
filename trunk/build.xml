@@ -34,7 +34,7 @@
 	</target>
 	
 	<target name="compile" depends="init" description="Compile all Java">
-		<javac srcdir="." destdir="bin" debug="true" debuglevel="lines,vars,source">
+		<javac srcdir="./src/main/java" destdir="bin" debug="true" debuglevel="lines,vars,source">
 			<classpath refid="javac.classpath" />
 		</javac>
 		<copy todir="bin">
@@ -47,7 +47,33 @@
 		</copy>
 	</target>
 	
-	<target name="build" depends="clean, compile">
+	<target name="test" depends="init, compile" description="Compile and run all Java tests">			
+		<javac srcdir="./src/test/java" destdir="bin" debug="true" debuglevel="lines,vars,source">
+			<classpath refid="javac.classpath" />
+		</javac>
+		
+		<copy todir="bin">
+			<fileset dir="./src/test/resources">
+				<include name="**" />
+			</fileset>
+		</copy>
+		<junit haltonfailure="true" showoutput="true" printsummary="on">
+			<classpath>
+				<pathelement location="bin" />
+				<fileset dir="lib">
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+			<formatter type="plain" />
+			<batchtest>
+				<fileset dir="./src/test/java">
+					<include name="**/Test*.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+	
+	<target name="build" depends="clean, compile, test">
 		<jar jarfile="jar/com.orbus.mahalo.jar">
 			<fileset dir="bin">
 				<include name="**/*.class" />
