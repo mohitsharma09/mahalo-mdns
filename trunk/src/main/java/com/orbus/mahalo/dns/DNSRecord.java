@@ -131,7 +131,7 @@ public abstract class DNSRecord
         _iTTL = other._iTTL;
     }
 
-    void write(ByteBuffer aBuffer)
+    public void write(ByteBuffer aBuffer)
     {
     	long now = System.currentTimeMillis();
     	
