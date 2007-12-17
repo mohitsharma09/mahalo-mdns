@@ -41,9 +41,11 @@
 			<fileset dir="./src">
 				<include name="**/*.properties" />
 			</fileset>
+			<!-- Add this back in if we have any resources
 			<fileset dir="./src/main/resources">
 				<include name="**" />
 			</fileset>
+			-->
 		</copy>
 	</target>
 	
@@ -57,7 +59,7 @@
 				<include name="**" />
 			</fileset>
 		</copy>
-		<junit haltonfailure="true" showoutput="true" printsummary="on">
+		<junit showoutput="true" printsummary="on">
 			<classpath>
 				<pathelement location="bin" />
 				<fileset dir="lib">
